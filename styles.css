@@ -1,14 +1,14 @@
 body {
   max-width: 50em;
   margin: 3em auto;
-  border: 1px solid grey;
+  border: 1px solid #ddd;
   border-radius: 5px;
   padding: 2em;
   font-family: sans-serif;
 }
 
 pre:not(:last-child) {
-  border-bottom: 1px solid grey;
+  border-bottom: 1px solid #ddd;
   padding-bottom: 1em;
 }
 
