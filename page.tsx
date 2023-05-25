@@ -10,6 +10,7 @@ import {
   searchLinkForIssueKeys,
 } from "./jira.ts";
 import { getCommit, getComparison, getLinkForPullRequest } from "./github.ts";
+import { processCommitMessage } from "./commit.tsx";
 
 function getCss(): Promise<string> {
   // load css from styles.css
@@ -37,57 +38,13 @@ export async function getPage() {
 async function getComparisonSummary(): Promise<JSX.Element> {
   const comparison = await getComparison();
 
-  const issueKeys: string[] = [];
+  const commitsData = await Promise.all(
+    (comparison.commits as object[])
+      .reverse()
+      .map((commit: any) => processCommitMessage(commit.commit.message)),
+  );
 
-  const commits = (comparison.commits as object[])
-    .reverse()
-    .map(async (commit: any) => {
-      const message: string = commit.commit.message;
-      const parts = message.split(/((?:SF-[0-9]+)|(?:\(#[0-9]+\)))/);
-      const result = [];
-
-      for (const part of parts) {
-        if (part === "") {
-          continue;
-        }
-        if (part.match(/SF-[0-9]+/)) {
-          result.push(
-            <a href={getLinkForJiraIssue(part)} target="_blank">
-              {part}
-            </a>,
-          );
-        } else if (part.match(/\(#[0-9]+\)/)) {
-          const prNumber: string = part.match(/[0-9]+/)?.[0]!;
-          result.push(
-            <>
-              (<a
-                href={getLinkForPullRequest(prNumber)}
-                target="_blank"
-              >
-                {"#" + prNumber}
-              </a>)
-            </>,
-          );
-        } else {
-          result.push(<>{part}</>);
-        }
-      }
-      const issueKey = message.match(/SF-[0-9]+/)?.[0];
-      let issueInfo = undefined;
-      if (issueKey) {
-        issueKeys.push(issueKey);
-        issueInfo = await getJiraIssueInfo(issueKey);
-      }
-      return (
-        <>
-          {issueInfo ? <img src={issueInfo.iconUrl} alt={issueInfo.key} /> : ""}
-          <span>
-            {issueInfo ? `${issueInfo.summary} (${issueInfo.resolution})` : ""}
-          </span>
-          <pre>{result}</pre>
-        </>
-      );
-    });
+  const issueKeys = commitsData.map((commit) => commit.linkedIssueKeys).flat();
 
   let migration = false;
   await Promise.all(
@@ -181,8 +138,8 @@ async function getComparisonSummary(): Promise<JSX.Element> {
           ))}
         </ul>
       </p>
-      <h2>Commits ({commits.length})</h2>
-      {await Promise.all(commits)}
+      <h2>Commits ({commitsData.length})</h2>
+      {commitsData.map((c) => c.element)}
     </Fragment>,
   );
 }
