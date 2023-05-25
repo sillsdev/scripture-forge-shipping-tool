@@ -57,16 +57,19 @@ async function getComparisonSummary(): Promise<JSX.Element> {
             </a>,
           );
         } else if (part.match(/\(#[0-9]+\)/)) {
+          const prNumber: string = part.match(/[0-9]+/)?.[0]!;
           result.push(
-            <a
-              href={getLinkForPullRequest(part.match(/[0-9]+/)?.[0]!)}
-              target="_blank"
-            >
-              {part}
-            </a>,
+            <>
+              (<a
+                href={getLinkForPullRequest(prNumber)}
+                target="_blank"
+              >
+                {"#" + prNumber}
+              </a>)
+            </>,
           );
         } else {
-          result.push(<span>{part}</span>);
+          result.push(<>{part}</>);
         }
       }
       const issueKey = message.match(/SF-[0-9]+/)?.[0];
