@@ -11,6 +11,7 @@ import {
 } from "./jira.ts";
 import { getCommit, getComparison, getLinkForPullRequest } from "./github.ts";
 import { processCommitMessage } from "./commit.tsx";
+import { migrationInfo } from "./checks.tsx";
 
 function getCss(): Promise<string> {
   // load css from styles.css
@@ -46,20 +47,10 @@ async function getComparisonSummary(): Promise<JSX.Element> {
 
   const issueKeys = commitsData.map((commit) => commit.linkedIssueKeys).flat();
 
-  let migration = false;
-  await Promise.all(
-    comparison.commits.map(async (commit: any) => {
-      const data = await getCommit(commit.url);
-      if (
-        data.commit.message.match(
-          /migrate/i ||
-            data.files.some((file: any) => file.filename.match(/migrate/i)),
-        )
-      ) {
-        migration = true;
-      }
-    }),
+  const commits = await Promise.all(
+    comparison.commits.map(async (commit: any) => await getCommit(commit.url)),
   );
+  const migrationCheck = migrationInfo(commits);
 
   function unknownCheck(description: string) {
     return (
@@ -92,13 +83,7 @@ async function getComparisonSummary(): Promise<JSX.Element> {
       </h1>
       <h2>Shipability checks</h2>
       <ul>
-        <li>
-          {migration ? warning : success}
-          Migrations:{" "}
-          {migration
-            ? "Likely"
-            : `None detected (no commit message or file matched /migrate/i)`}
-        </li>
+        <li>{migrationCheck}</li>
         <li>
           {comparison.status === "behind" ? success : warning}
           Is fast-forward: {comparison.status === "ahead" ? "Yes" : "No"},{" "}

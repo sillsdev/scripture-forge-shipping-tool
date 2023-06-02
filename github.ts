@@ -6,7 +6,15 @@ const githubToken = Deno.env.get("GITHUB_AUTH_TOKEN");
 
 const octokit = new Octokit({ auth: githubToken });
 
-export async function getCommit(commitUrl: string): Promise<any> {
+export type Commit = {
+  sha: string;
+  commit: {
+    message: string;
+  };
+  files: { filename: string }[];
+};
+
+export async function getCommit(commitUrl: string): Promise<{ data: Commit }> {
   const response = await octokit.request(commitUrl);
   return response.data;
 }
