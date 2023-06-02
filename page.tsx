@@ -1,15 +1,10 @@
 /** @jsx h */
 /** @jsxFrag Fragment */
 import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
-import { repoInfo } from "./globals.ts";
 import { success, warning } from "./icons.tsx";
 import { getTestLodgeTestRunInfo } from "./testlodge.ts";
-import {
-  getJiraIssueInfo,
-  getLinkForJiraIssue,
-  searchLinkForIssueKeys,
-} from "./jira.ts";
-import { getCommit, getComparison, getLinkForPullRequest } from "./github.ts";
+import { getLinkForJiraIssue, searchLinkForIssueKeys } from "./jira.ts";
+import { getCommit, getComparison } from "./github.ts";
 import { processCommitMessage } from "./commit.tsx";
 import { migrationInfo } from "./checks.tsx";
 
@@ -18,13 +13,14 @@ function getCss(): Promise<string> {
   return Deno.readTextFile("styles.css");
 }
 
-export async function page(content: JSX.Element): Promise<JSX.Element> {
+export async function page(
+  title: string,
+  content: JSX.Element,
+): Promise<JSX.Element> {
   return (
     <html>
       <head>
-        <title>
-          Comparison between {repoInfo.head} and {repoInfo.base}
-        </title>
+        <title>{title}</title>
         <style dangerouslySetInnerHTML={{ __html: await getCss() }}></style>
       </head>
       <body>{content}</body>
@@ -32,12 +28,11 @@ export async function page(content: JSX.Element): Promise<JSX.Element> {
   );
 }
 
-export async function getPage() {
-  return await getComparisonSummary();
-}
-
-async function getComparisonSummary(): Promise<JSX.Element> {
-  const comparison = await getComparison();
+export async function getPage(
+  base: string,
+  head: string,
+): Promise<JSX.Element> {
+  const comparison = await getComparison(base, head);
 
   const commitsData = await Promise.all(
     (comparison.commits as object[])
@@ -76,11 +71,12 @@ async function getComparisonSummary(): Promise<JSX.Element> {
     testLodgeInfo.skipped_number === 0 &&
     testLodgeInfo.incomplete_number === 0;
 
+  const title = `Comparison between ${base} and ${head}`;
+
   return page(
+    title,
     <Fragment>
-      <h1>
-        Comparison between {repoInfo.head} and {repoInfo.base}
-      </h1>
+      <h1>{title}</h1>
       <h2>Shipability checks</h2>
       <ul>
         <li>{migrationCheck}</li>

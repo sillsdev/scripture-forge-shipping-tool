@@ -19,14 +19,14 @@ export async function getCommit(commitUrl: string): Promise<{ data: Commit }> {
   return response.data;
 }
 
-export async function getComparison() {
+export async function getComparison(base: string, head: string) {
   const response = await octokit.request(
     "GET /repos/{owner}/{repo}/compare/{base}...{head}",
     {
       owner: repoInfo.owner,
       repo: repoInfo.repo,
-      base: repoInfo.base,
-      head: repoInfo.head,
+      base: base,
+      head: head,
     }
   );
   return response.data;
