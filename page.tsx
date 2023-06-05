@@ -81,7 +81,7 @@ export async function getPage(
       <ul>
         <li>{migrationCheck}</li>
         <li>
-          {comparison.status === "behind" ? success : warning}
+          {comparison.status === "ahead" ? success : warning}
           Is fast-forward: {comparison.status === "ahead" ? "Yes" : "No"},{" "}
           {comparison.status} (ahead by{"  "}{comparison.ahead_by}, behind by
           {" "}
