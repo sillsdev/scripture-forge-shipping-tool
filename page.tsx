@@ -4,9 +4,9 @@ import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
 import { success, warning } from "./icons.tsx";
 import { getTestLodgeTestRunInfo } from "./testlodge.ts";
 import { getLinkForJiraIssue, searchLinkForIssueKeys } from "./jira.ts";
-import { getCommit, getComparison } from "./github.ts";
+import { getComparison } from "./github.ts";
 import { processCommitMessage } from "./commit.tsx";
-import { migrationInfo } from "./checks.tsx";
+import { getAllChecks } from "./checks.tsx";
 
 function getCss(): Promise<string> {
   // load css from styles.css
@@ -42,30 +42,6 @@ export async function getPage(
 
   const issueKeys = commitsData.map((commit) => commit.linkedIssueKeys).flat();
 
-  const commits = await Promise.all(
-    comparison.commits.map(async (commit: any) => await getCommit(commit.url)),
-  );
-  const migrationCheck = migrationInfo(commits);
-
-  function unknownCheck(description: string) {
-    return (
-      <label>
-        <input type="checkbox"></input>
-        {description}
-      </label>
-    );
-  }
-
-  const checksWithoutKnownStatus = `Build verification tests passing
-    No significant new issues found by testers (check test results log)
-    Jira release created & issues added to it (bulk edit is useful for copying issues from a QA release)
-    Issues in release have testing completed
-    Build counter in TeamCity updated and counter reset to 0 (if planning a major or minor release)
-    `
-    .split("\n")
-    .map((check) => check.trim())
-    .filter((check) => check !== "");
-
   const testLodgeInfo = await getTestLodgeTestRunInfo();
   const testLodgeRunSuccess = testLodgeInfo.failed_number === 0 &&
     testLodgeInfo.skipped_number === 0 &&
@@ -78,18 +54,7 @@ export async function getPage(
     <Fragment>
       <h1>{title}</h1>
       <h2>Shipability checks</h2>
-      <ul>
-        <li>{migrationCheck}</li>
-        <li>
-          {comparison.status === "ahead" ? success : warning}
-          Is fast-forward: {comparison.status === "ahead" ? "Yes" : "No"},{" "}
-          {comparison.status} (ahead by{"  "}{comparison.ahead_by}, behind by
-          {" "}
-          {comparison.behind_by})
-        </li>
-        {checksWithoutKnownStatus.map((check) => <li>{unknownCheck(check)}
-        </li>)}
-      </ul>
+      {await getAllChecks(comparison)}
       <h2>Test summary</h2>
       <p>
         Description: {testLodgeInfo.sfVersion}
