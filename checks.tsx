@@ -36,25 +36,37 @@ export function migrationInfo(commits: Commit[]): JSX.Element {
   }
 }
 
-function unknownCheck(description: string) {
+function unknownCheck(description: JSX.Element): JSX.Element {
   return (
     <label>
-      <input type="checkbox"></input>
-      {description}
+      <input type="checkbox" /> {description}
     </label>
   );
 }
 
-const checksWithoutKnownStatus = `Build verification tests passing
-No significant new issues found by testers (check test results log)
-Jira release created & issues added to it (bulk edit is useful for copying issues from a QA release)
-Issues in release have testing completed
-Build counter in TeamCity updated and counter reset to 0 (if planning a major or minor release)
-Any updates to Auth0 tenants or localization files completed
-`
-  .split("\n")
-  .map((check) => check.trim())
-  .filter((check) => check !== "");
+const testLodgeUrl = "https://app.testlodge.com/a/11041/projects/41748/runs";
+const testResultSheetUrl =
+  "https://docs.google.com/spreadsheets/d/1Pji8dkzcNTzh1NxqaEHj-4o_otLHFArkrBecETZqSgM";
+
+const simpleChecks: JSX.Element[] = [
+  unknownCheck(
+    <a href={testLodgeUrl} target="_blank">Build verification tests passing</a>,
+  ),
+  unknownCheck(
+    <>
+      No significant new issues found by testers (check{" "}
+      <a href={testResultSheetUrl} target="_blank">test results log</a>)
+    </>,
+  ),
+  unknownCheck(
+    "Jira release created & issues added to it (bulk edit is useful for copying issues from a QA release)",
+  ),
+  unknownCheck("Issues in release have testing completed"),
+  unknownCheck(
+    "Build counter in TeamCity updated and counter reset to 0 (if planning a major or minor release)",
+  ),
+  unknownCheck("Any updates to Auth0 tenants or localization files completed"),
+];
 
 export async function getAllChecks(comparison: any): Promise<JSX.Element> {
   const commits = await Promise.all(
@@ -70,7 +82,7 @@ export async function getAllChecks(comparison: any): Promise<JSX.Element> {
         {comparison.status} (ahead by{"  "}{comparison.ahead_by}, behind by{" "}
         {comparison.behind_by})
       </li>
-      {checksWithoutKnownStatus.map((check) => <li>{unknownCheck(check)}</li>)}
+      {simpleChecks.map((check) => <li>{check}</li>)}
     </ul>
   );
 }
