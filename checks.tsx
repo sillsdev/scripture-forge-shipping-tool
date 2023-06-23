@@ -59,11 +59,28 @@ const simpleChecks: JSX.Element[] = [
     </>,
   ),
   unknownCheck(
-    "Jira release created & issues added to it (bulk edit is useful for copying issues from a QA release)",
+    <>
+      <a
+        href="https://jira.sil.org/projects/SF?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page"
+        target="_blank"
+      >
+        Jira release created
+      </a>{" "}
+      & issues added to it (bulk edit is useful for copying issues from a QA
+      release)
+    </>,
   ),
   unknownCheck("Issues in release have testing completed"),
   unknownCheck(
-    "Build counter in TeamCity updated and counter reset to 0 (if planning a major or minor release)",
+    <>
+      <a
+        href="https://build.palaso.org/admin/editBuild.html?id=buildType:xForgeDeploy_ScriptureForgeLive"
+        target="_blank"
+      >
+        Build counter in TeamCity
+      </a>{" "}
+      updated and counter reset to 0 (if planning a major or minor release)
+    </>,
   ),
   unknownCheck("Any updates to Auth0 tenants or localization files completed"),
 ];
