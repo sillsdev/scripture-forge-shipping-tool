@@ -14,7 +14,8 @@ export function migrationInfo(commits: Commit[]): JSX.Element {
   if (possibleMigrationCommits.length === 0) {
     return (
       <>
-        {success} None detected (no commit message or file matched /migrate/i)
+        None detected (no commit message or file matched{" "}
+        <code>/migrate|migration/i</code>)
       </>
     );
   } else {
