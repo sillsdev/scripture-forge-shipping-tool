@@ -2,7 +2,7 @@
 /** @jsxFrag Fragment */
 import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
 import { getLinkForPullRequest } from "./github.ts";
-import { getJiraIssueInfo } from "./jira.ts";
+import { getJiraIssueInfos, JiraIssueInfo } from "./jira.ts";
 import { getLinkForJiraIssue } from "./jira.ts";
 
 export type CommitMessageResult = {
@@ -12,9 +12,37 @@ export type CommitMessageResult = {
   element: JSX.Element;
 };
 
-export async function processCommitMessage(
+async function getJiraIssueInfosFromCommitMessages(
+  messages: string[],
+): Promise<JiraIssueInfo[]> {
+  const issueKeys = new Set<string>();
+  for (const message of messages) {
+    for (const issueKey of message.match(/SF-[0-9]+/g) ?? []) {
+      issueKeys.add(issueKey);
+    }
+  }
+  return await getJiraIssueInfos(Array.from(issueKeys));
+}
+
+export async function getCommitsData(
+  messages: string[],
+): Promise<CommitMessageResult[]> {
+  const jiraIssueInfos = await getJiraIssueInfosFromCommitMessages(messages);
+
+  const commitResults: CommitMessageResult[] = [];
+  for (const message of messages) {
+    const issueKey = message.match(/SF-[0-9]+/)?.[0];
+    const jiraIssueInfo = jiraIssueInfos.find((info) => info.key === issueKey);
+    const result = await getCommitData(message, jiraIssueInfo);
+    commitResults.push(result);
+  }
+  return commitResults;
+}
+
+function getCommitData(
   message: string,
-): Promise<CommitMessageResult> {
+  issueInfo: JiraIssueInfo | undefined,
+): CommitMessageResult {
   const parts = message.split(/((?:SF-[0-9]+)|(?:\(#[0-9]+\)))/);
   const result = [];
 
@@ -49,11 +77,7 @@ export async function processCommitMessage(
       result.push(<>{part}</>);
     }
   }
-  const issueKey = message.match(/SF-[0-9]+/)?.[0];
-  let issueInfo = undefined;
-  if (issueKey) {
-    issueInfo = await getJiraIssueInfo(issueKey);
-  }
+
   const element: JSX.Element = (
     <>
       {issueInfo ? <img src={issueInfo.iconUrl} alt={issueInfo.key} /> : ""}

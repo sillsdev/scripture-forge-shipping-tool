@@ -5,7 +5,7 @@ import { success, warning } from "./icons.tsx";
 import { getTestLodgeTestRunInfo } from "./testlodge.ts";
 import { getLinkForJiraIssue, searchLinkForIssueKeys } from "./jira.ts";
 import { getComparison } from "./github.ts";
-import { processCommitMessage } from "./commit.tsx";
+import { getCommitsData } from "./commit.tsx";
 import { getAllChecks } from "./checks.tsx";
 
 function getCss(): Promise<string> {
@@ -34,11 +34,10 @@ export async function getPage(
 ): Promise<JSX.Element> {
   const comparison = await getComparison(base, head);
 
-  const commitsData = await Promise.all(
-    (comparison.commits as object[])
-      .reverse()
-      .map((commit: any) => processCommitMessage(commit.commit.message)),
-  );
+  const commitMessages = (comparison.commits as object[])
+    .reverse()
+    .map((commit: any) => commit.commit.message);
+  const commitsData = await getCommitsData(commitMessages);
 
   const issueKeys = commitsData.map((commit) => commit.linkedIssueKeys).flat();
 
