@@ -5,6 +5,11 @@ import { getLinkForPullRequest } from "./github.ts";
 import { getJiraIssueInfos, JiraIssueInfo } from "./jira.ts";
 import { getLinkForJiraIssue } from "./jira.ts";
 
+export type CommitsAndIssues = {
+  commits: CommitMessageResult[];
+  issues: JiraIssueInfo[];
+};
+
 export type CommitMessageResult = {
   message: string;
   linkedPRNumbers: string[];
@@ -24,9 +29,9 @@ async function getJiraIssueInfosFromCommitMessages(
   return await getJiraIssueInfos(Array.from(issueKeys));
 }
 
-export async function getCommitsData(
+export async function getCommitsAndIssueData(
   messages: string[],
-): Promise<CommitMessageResult[]> {
+): Promise<CommitsAndIssues> {
   const jiraIssueInfos = await getJiraIssueInfosFromCommitMessages(messages);
 
   const commitResults: CommitMessageResult[] = [];
@@ -36,7 +41,10 @@ export async function getCommitsData(
     const result = await getCommitData(message, jiraIssueInfo);
     commitResults.push(result);
   }
-  return commitResults;
+  return {
+    commits: commitResults,
+    issues: jiraIssueInfos,
+  };
 }
 
 function getCommitData(

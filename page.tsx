@@ -5,7 +5,7 @@ import { success, warning } from "./icons.tsx";
 import { getTestLodgeTestRunInfo } from "./testlodge.ts";
 import { getLinkForJiraIssue, searchLinkForIssueKeys } from "./jira.ts";
 import { getComparison } from "./github.ts";
-import { getCommitsData } from "./commit.tsx";
+import { getCommitsAndIssueData } from "./commit.tsx";
 import { getAllChecks } from "./checks.tsx";
 
 function getCss(): Promise<string> {
@@ -37,9 +37,23 @@ export async function getPage(
   const commitMessages = (comparison.commits as object[])
     .reverse()
     .map((commit: any) => commit.commit.message);
-  const commitsData = await getCommitsData(commitMessages);
+  const { commits, issues } = await getCommitsAndIssueData(commitMessages);
 
-  const issueKeys = commitsData.map((commit) => commit.linkedIssueKeys).flat();
+  const issueStatuses: { [key: string]: string } = {};
+  for (const issue of issues) {
+    issueStatuses[issue.key] = issue.resolution;
+  }
+
+  const issueKeys = issues.map((issue) => issue.key);
+
+  const issuesByResolution: { [key: string]: string[] } = {};
+  for (const issue of issues) {
+    const resolution = issue.resolution ?? "Unresolved";
+    if (issuesByResolution[resolution] === undefined) {
+      issuesByResolution[resolution] = [];
+    }
+    issuesByResolution[resolution].push(issue.key);
+  }
 
   const testLodgeInfo = await getTestLodgeTestRunInfo();
   const testLodgeRunSuccess = testLodgeInfo.failed_number === 0 &&
@@ -78,13 +92,24 @@ export async function getPage(
             <li>
               <a href={getLinkForJiraIssue(issueKey)} target="_blank">
                 {issueKey}
+              </a>{" "}
+              {issueStatuses[issueKey]}
+            </li>
+          ))}
+        </ul>
+        <h3>Issue status summary</h3>
+        <ul>
+          {Object.entries(issuesByResolution).map(([resolution, issueKeys]) => (
+            <li>
+              <a href={searchLinkForIssueKeys(issueKeys)} target="_blank">
+                {resolution}: {issueKeys.length}
               </a>
             </li>
           ))}
         </ul>
       </p>
-      <h2>Commits ({commitsData.length})</h2>
-      {commitsData.map((c) => c.element)}
+      <h2>Commits ({commits.length})</h2>
+      {commits.map((c) => c.element)}
     </Fragment>,
   );
 }
