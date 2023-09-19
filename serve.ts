@@ -11,7 +11,7 @@ export function startServer() {
     if (path === "/") {
       page = await getPage("sf-live", "master");
     } else {
-      const match = path.match(/^\/compare\/([-\w]+)\/([-\w]+)$/);
+      const match = path.match(/^\/compare\/([-\w.]+)\/([-\w.]+)$/);
       if (match) {
         const base = match[1];
         const head = match[2];
