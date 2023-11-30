@@ -10,5 +10,6 @@ A simple tool to help us know when we're ready to :shipit:
 - GITHUB_AUTH_TOKEN
 - TESTLODGE_AUTH_TOKEN
 - TESTLODGE_USER_EMAIL
+- JIRA_ACCESS_TOKEN
 
 3. Run `deno task dev` in the repo root.

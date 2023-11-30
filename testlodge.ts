@@ -1,6 +1,12 @@
 const email = Deno.env.get("TESTLODGE_USER_EMAIL");
 const testLodgeToken = Deno.env.get("TESTLODGE_AUTH_TOKEN");
 
+if (email == null || testLodgeToken == null) {
+  console.warn(
+    "TESTLODGE_USER_EMAIL or TESTLODGE_AUTH_TOKEN not set, TestLodge functions will not work"
+  );
+}
+
 type TestLodgeTestRunInfo = {
   sfVersion: string;
   passed_number: number;

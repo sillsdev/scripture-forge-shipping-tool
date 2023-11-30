@@ -4,6 +4,10 @@ import { repoInfo } from "./globals.ts";
 
 const githubToken = Deno.env.get("GITHUB_AUTH_TOKEN");
 
+if (githubToken == null) {
+  console.warn("GITHUB_AUTH_TOKEN not set, GitHub functions will not work");
+}
+
 const octokit = new Octokit({ auth: githubToken });
 
 export type Commit = {
