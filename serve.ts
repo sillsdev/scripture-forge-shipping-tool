@@ -9,7 +9,7 @@ export function startServer() {
     let page;
 
     if (path === "/") {
-      page = await getPage("sf-live", "master");
+      page = await getPage("sf-live", "sf-qa");
     } else {
       const match = path.match(/^\/compare\/([-\w.]+)\/([-\w.]+)$/);
       if (match) {
