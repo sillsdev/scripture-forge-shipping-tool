@@ -21,6 +21,10 @@ export type JiraIssueInfo = {
 export async function getJiraIssueInfos(
   keys: string[]
 ): Promise<JiraIssueInfo[]> {
+  if (keys.length === 0) {
+    // Jira API doesn't like empty searches
+    return Promise.resolve([]);
+  }
   const searchUrl = `${apiRoot}/search?jql=${encodedJiraIssueSearch(
     keys
   )}&fields=summary,issuetype,resolution`;
