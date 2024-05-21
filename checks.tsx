@@ -50,9 +50,7 @@ const testResultSheetUrl =
   "https://docs.google.com/spreadsheets/d/1Pji8dkzcNTzh1NxqaEHj-4o_otLHFArkrBecETZqSgM";
 
 const simpleChecks: JSX.Element[] = [
-  unknownCheck(
-    <a href={testLodgeUrl} target="_blank">Build verification tests passing</a>,
-  ),
+  unknownCheck("Full regression run passed"),
   unknownCheck(
     <>
       No significant new issues found by testers (check{" "}

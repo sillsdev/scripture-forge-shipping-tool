@@ -1,8 +1,6 @@
 /** @jsx h */
 /** @jsxFrag Fragment */
 import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
-import { success, warning } from "./icons.tsx";
-import { getTestLodgeTestRunInfo } from "./testlodge.ts";
 import { getLinkForJiraIssue, searchLinkForIssueKeys } from "./jira.ts";
 import { getComparison } from "./github.ts";
 import { getCommitsAndIssueData } from "./commit.tsx";
@@ -55,11 +53,6 @@ export async function getPage(
     issuesByResolution[resolution].push(issue.key);
   }
 
-  const testLodgeInfo = await getTestLodgeTestRunInfo();
-  const testLodgeRunSuccess = testLodgeInfo.failed_number === 0 &&
-    testLodgeInfo.skipped_number === 0 &&
-    testLodgeInfo.incomplete_number === 0;
-
   const title = `Comparison between ${base} and ${head}`;
 
   return page(
@@ -68,20 +61,6 @@ export async function getPage(
       <h1>{title}</h1>
       <h2>Shipability checks</h2>
       {await getAllChecks(comparison)}
-      <h2>Test summary</h2>
-      <p>
-        Description: {testLodgeInfo.sfVersion}
-        <br />
-        Passed: {testLodgeInfo.passed_number}
-        <br />
-        Skipped: {testLodgeInfo.skipped_number}
-        <br />
-        Failed: {testLodgeInfo.failed_number}
-        <br />
-        Incomplete: {testLodgeInfo.incomplete_number}
-        <br />
-        Success: {testLodgeRunSuccess ? success : warning}
-      </p>
       <h2>Issues ({issueKeys.length})</h2>
       <p>
         <a href={searchLinkForIssueKeys(issueKeys)} target="_blank">
