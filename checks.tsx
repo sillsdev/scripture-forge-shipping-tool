@@ -1,10 +1,18 @@
 /** @jsx h */
 /** @jsxFrag Fragment */
 import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
-import { Commit, getCommit } from "./github.ts";
+import { Commit, Comparison, getCommit, getComparison } from "./github.ts";
 import { success, warning } from "./icons.tsx";
 
-export function migrationInfo(commits: Commit[]): JSX.Element {
+async function migrationInfo(comparison: Comparison): Promise<JSX.Element> {
+  // TODO it's not really necessary to fetch all commits in order to get file names
+  // if none of the file names in the comparison match the regex
+  const commits = await Promise.all(
+    comparison.commits.map(async (
+      commit,
+    ) => (await getCommit(commit.url))),
+  );
+
   const migrationRegex = /migrate|migration/i;
   const possibleMigrationCommits = commits.filter((commit) =>
     migrationRegex.test(commit.commit.message) ||
@@ -14,7 +22,7 @@ export function migrationInfo(commits: Commit[]): JSX.Element {
   if (possibleMigrationCommits.length === 0) {
     return (
       <>
-        None detected (no commit message or file matched{" "}
+        {success} None detected (no commit message or file matched{" "}
         <code>/migrate|migration/i</code>)
       </>
     );
@@ -37,6 +45,66 @@ export function migrationInfo(commits: Commit[]): JSX.Element {
   }
 }
 
+function nonCherryPickedCommits(
+  headComparison: Comparison,
+  reverseComparison: Comparison,
+) {
+  return reverseComparison.commits.filter((commit) => {
+    !headComparison.commits.some((headCommit) =>
+      headCommit.commit.message.includes(
+        `cherry picked from commit ${commit.sha}`,
+      ) ||
+      commit.commit.message.includes(
+        `cherry picked to commit ${headCommit.sha}`,
+      )
+    );
+  });
+}
+
+async function fastForwardInfo(
+  comparison: Comparison,
+  base: string,
+  head: string,
+): Promise<JSX.Element> {
+  if (comparison.status === "ahead") {
+    return (
+      <>{success} Is fast-forward: Yes (ahead by{"  "}{comparison.ahead_by})</>
+    );
+  } else {
+    const reverseComparison = await getComparison(head, base);
+    const nonCherryPickCommits = nonCherryPickedCommits(
+      comparison,
+      reverseComparison,
+    );
+    if (nonCherryPickCommits.length === 0) {
+      return (
+        <>
+          {success} Is fast-forward: No, {comparison.status} (ahead by{" "}
+          {comparison.ahead_by}, behind by{" "}
+          {comparison.behind_by}, but all diverging commits are cherry-picked
+          across branches)
+        </>
+      );
+    } else {
+      return (
+        <>
+          {warning} Is fast-forward: No, {comparison.status} (ahead by{" "}
+          {comparison.ahead_by}, behind by{"  "}{comparison.behind_by},{" "}
+          {nonCherryPickCommits.length}{" "}
+          commits that are not cherry-picked across branches)
+          <p>
+            {nonCherryPickCommits.map((commit) => (
+              <a href={commit.html_url} target="_blank">
+                {commit.commit.message}
+              </a>
+            ))}
+          </p>
+        </>
+      );
+    }
+  }
+}
+
 function unknownCheck(description: JSX.Element): JSX.Element {
   return (
     <label>
@@ -45,7 +113,6 @@ function unknownCheck(description: JSX.Element): JSX.Element {
   );
 }
 
-const testLodgeUrl = "https://app.testlodge.com/a/11041/projects/41748/runs";
 const testResultSheetUrl =
   "https://docs.google.com/spreadsheets/d/1Pji8dkzcNTzh1NxqaEHj-4o_otLHFArkrBecETZqSgM";
 
@@ -73,20 +140,15 @@ const simpleChecks: JSX.Element[] = [
   unknownCheck("Any updates to Auth0 tenants or localization files completed"),
 ];
 
-export async function getAllChecks(comparison: any): Promise<JSX.Element> {
-  const commits = await Promise.all(
-    comparison.commits.map(async (commit: any) => await getCommit(commit.url)),
-  );
-
+export async function getAllChecks(
+  comparison: Comparison,
+  base: string,
+  head: string,
+): Promise<JSX.Element> {
   return (
     <ul>
-      <li>{migrationInfo(commits)}</li>
-      <li>
-        {comparison.status === "ahead" ? success : warning}
-        Is fast-forward: {comparison.status === "ahead" ? "Yes" : "No"},{" "}
-        {comparison.status} (ahead by{"  "}{comparison.ahead_by}, behind by{" "}
-        {comparison.behind_by})
-      </li>
+      <li>{await migrationInfo(comparison)}</li>
+      <li>{await fastForwardInfo(comparison, base, head)}</li>
       {simpleChecks.map((check) => <li>{check}</li>)}
     </ul>
   );

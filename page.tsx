@@ -32,9 +32,9 @@ export async function getPage(
 ): Promise<JSX.Element> {
   const comparison = await getComparison(base, head);
 
-  const commitMessages = (comparison.commits as object[])
-    .reverse()
-    .map((commit: any) => commit.commit.message);
+  const commitMessages = comparison.commits.reverse().map((commit) =>
+    commit.commit.message
+  );
   const { commits, issues } = await getCommitsAndIssueData(commitMessages);
 
   const issueStatuses: { [key: string]: string } = {};
@@ -60,7 +60,7 @@ export async function getPage(
     <Fragment>
       <h1>{title}</h1>
       <h2>Shipability checks</h2>
-      {await getAllChecks(comparison)}
+      {await getAllChecks(comparison, base, head)}
       <h2>Issues ({issueKeys.length})</h2>
       <p>
         <a href={searchLinkForIssueKeys(issueKeys)} target="_blank">
