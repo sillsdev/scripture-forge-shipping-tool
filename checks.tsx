@@ -70,17 +70,6 @@ const simpleChecks: JSX.Element[] = [
     </>,
   ),
   unknownCheck("Issues in release have testing completed"),
-  unknownCheck(
-    <>
-      <a
-        href="https://build.palaso.org/admin/editBuild.html?id=buildType:xForgeDeploy_ScriptureForgeLive"
-        target="_blank"
-      >
-        Build counter in TeamCity
-      </a>{" "}
-      updated and counter reset to 0 (if planning a major or minor release)
-    </>,
-  ),
   unknownCheck("Any updates to Auth0 tenants or localization files completed"),
 ];
 
