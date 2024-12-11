@@ -1,3 +1,7 @@
+:root {
+  color-scheme: light dark;
+}
+
 body {
   max-width: 50em;
   margin: 3em auto;
@@ -24,6 +28,12 @@ ul li {
 svg {
   width: 1em;
   height: 1em;
+}
+
+@media (prefers-color-scheme: dark) {
+  svg {
+    filter: invert(1);
+  }
 }
 
 input[type="checkbox"],
