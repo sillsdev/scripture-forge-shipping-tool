@@ -33,7 +33,8 @@ export async function getPage(
   const comparison = await getComparison(base, head);
 
   const commitMessages = comparison.commits.reverse().map((commit) =>
-    commit.commit.message
+    commit.commit.message +
+    (commit.commit.note ? "\n\n--- Git Notes ---\n\n" + commit.commit.note : "")
   );
   const { commits, issues } = await getCommitsAndIssueData(commitMessages);
 

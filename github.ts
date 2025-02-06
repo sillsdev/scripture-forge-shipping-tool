@@ -38,6 +38,7 @@ export type Comparison = {
     url: string;
     commit: {
       message: string;
+      note?: string;
     };
   }[];
   files: {
@@ -49,16 +50,49 @@ export async function getComparison(
   base: string,
   head: string
 ): Promise<Comparison> {
+  const [response, allNotes] = await Promise.all([
+    (await octokit.request(
+      "GET /repos/{owner}/{repo}/compare/{base}...{head}",
+      {
+        owner: repoInfo.owner,
+        repo: repoInfo.repo,
+        base: base,
+        head: head,
+      }
+    )) as Promise<{ data: Comparison }>,
+    getAllNotes(),
+  ]);
+
+  for (const commit of response.data.commits) {
+    const note = allNotes.get(commit.sha);
+    if (note != null) {
+      commit.commit.note = note;
+    }
+  }
+
+  return response.data;
+}
+
+export async function getAllNotes(): Promise<Map<string, string>> {
+  // Notes is like a branch, where every file is named with the commit SHA it pertains to, and the contents are the note.
+  // https://api.github.com/repos/sillsdev/web-xforge/git/trees/refs/notes/commits
+
   const response = await octokit.request(
-    "GET /repos/{owner}/{repo}/compare/{base}...{head}",
+    "GET /repos/{owner}/{repo}/git/trees/{branch}",
     {
       owner: repoInfo.owner,
       repo: repoInfo.repo,
-      base: base,
-      head: head,
+      branch: "refs/notes/commits",
     }
   );
-  return response.data;
+
+  const notes = new Map<string, string>();
+  for (const note of response.data.tree) {
+    const noteResponse = await octokit.request(note.url);
+    const content = atob(noteResponse.data.content);
+    notes.set(note.path, content);
+  }
+  return notes;
 }
 
 export function getLinkForPullRequest(pullRequest: string): string {
