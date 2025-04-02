@@ -135,60 +135,11 @@ const sfUrl = "https://scriptureforge.org/";
 const jiraReleasesUrl =
   "https://jira.sil.org/projects/SF?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page";
 
-const simpleChecks: JSX.Element[] = [
+const shipActions: JSX.Element[] = [
   unknownCheck(
     <>
-      No blockers in full regression test{" "}
-      <a href={regressionTestReportUrl} target="_blank">
-        report
-      </a>
-    </>
-  ),
-  unknownCheck(
-    <>
-      No blocking issues found by testers in{" "}
-      <a href={testResultSheetUrl} target="_blank">
-        results summary
-      </a>
-      .{" "}
-      <p class="more-information">
-        This summary is made by examining the{" "}
-        <a href={testResultObservationsFolderUrl} target="_blank">
-          test observations
-        </a>
-        .
-      </p>
-    </>
-  ),
-  unknownCheck("Handle any needed migrations."),
-  unknownCheck(
-    "Consider the commits being released, below. Does anything need attention?"
-  ),
-  unknownCheck(
-    <>
-      Issues in release have testing completed.{" "}
-      <p class="more-information">
-        They will have status Resolved, Helps, or Closed if their testing is
-        completed.
-      </p>
-    </>
-  ),
-  unknownCheck(
-    <>
-      Any needed updates to Auth0{" "}
-      <a href={auth0PRsUrl} target="_blank">
-        tenants
-      </a>{" "}
-      or{" "}
-      <a href={auth0StringsUrl} target="_blank">
-        localization files
-      </a>{" "}
-      completed
-    </>
-  ),
-  unknownCheck(
-    <>
-      Release by running the{" "}
+      In conjunction with performing any needed migrations, release by running
+      the{" "}
       <a href={releaseToLiveWorkflowUrl} target="_blank">
         workflow
       </a>
@@ -210,6 +161,9 @@ const simpleChecks: JSX.Element[] = [
       .
     </>
   ),
+];
+
+const postProcessingSteps: JSX.Element[] = [
   unknownCheck(
     <>
       Re-enable the{" "}
@@ -248,16 +202,98 @@ const simpleChecks: JSX.Element[] = [
   ),
 ];
 
-export async function getAllChecks(
+export async function getDeterminationChecks(
   comparison: Comparison,
   base: string,
   head: string
 ): Promise<JSX.Element> {
+  const determinationChecks: JSX.Element[] = [
+    unknownCheck(
+      <>
+        No blockers in full regression test{" "}
+        <a href={regressionTestReportUrl} target="_blank">
+          report
+        </a>
+      </>
+    ),
+    unknownCheck(
+      <>
+        No blocking issues found by testers in{" "}
+        <a href={testResultSheetUrl} target="_blank">
+          results summary
+        </a>
+        .{" "}
+        <p class="more-information">
+          This summary is made by examining the{" "}
+          <a href={testResultObservationsFolderUrl} target="_blank">
+            test observations
+          </a>
+          .
+        </p>
+      </>
+    ),
+    unknownCheck(
+      <>
+        Prepare to handle any needed migrations.
+        <p>{await migrationInfo(comparison)}</p>
+      </>
+    ),
+    unknownCheck(
+      "Consider the commits being released, below. Does anything need attention?"
+    ),
+    unknownCheck(
+      <>
+        Issues in release have testing completed.{" "}
+        <p class="more-information">
+          They will have status Resolved, Helps, or Closed if their testing is
+          completed.
+        </p>
+      </>
+    ),
+    unknownCheck(
+      <>
+        If there is a hotfix on Live, the same code should also be on QA.
+        <p>{await fastForwardInfo(comparison, base, head)}</p>
+      </>
+    ),
+    unknownCheck(
+      <>
+        Any needed updates to Auth0{" "}
+        <a href={auth0PRsUrl} target="_blank">
+          tenants
+        </a>{" "}
+        or{" "}
+        <a href={auth0StringsUrl} target="_blank">
+          localization files
+        </a>{" "}
+        completed
+      </>
+    ),
+  ];
+
   return (
     <ul>
-      <li>{await migrationInfo(comparison)}</li>
-      <li>{await fastForwardInfo(comparison, base, head)}</li>
-      {simpleChecks.map((check) => (
+      {determinationChecks.map((check) => (
+        <li>{check}</li>
+      ))}
+    </ul>
+  );
+}
+
+export async function getShipActions(): Promise<JSX.Element> {
+  return (
+    <ul>
+      {shipActions.map((check) => (
+        <li>{check}</li>
+      ))}
+    </ul>
+  );
+}
+
+export async function getPostProcessingSteps(): Promise<JSX.Element> {
+  return (
+    <ul>
+      {postProcessingSteps.map((check) => (
         <li>{check}</li>
       ))}
     </ul>

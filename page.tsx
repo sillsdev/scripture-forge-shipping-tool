@@ -4,7 +4,11 @@ import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
 import { getLinkForJiraIssue, searchLinkForIssueKeys } from "./jira.ts";
 import { getComparison } from "./github.ts";
 import { getCommitsAndIssueData } from "./commit.tsx";
-import { getAllChecks } from "./checks.tsx";
+import {
+  getDeterminationChecks,
+  getPostProcessingSteps,
+  getShipActions,
+} from "./checks.tsx";
 
 function getCss(): Promise<string> {
   // load css from styles.css
@@ -13,7 +17,7 @@ function getCss(): Promise<string> {
 
 export async function page(
   title: string,
-  content: JSX.Element,
+  content: JSX.Element
 ): Promise<JSX.Element> {
   return (
     <html>
@@ -28,14 +32,19 @@ export async function page(
 
 export async function getPage(
   base: string,
-  head: string,
+  head: string
 ): Promise<JSX.Element> {
   const comparison = await getComparison(base, head);
 
-  const commitMessages = comparison.commits.reverse().map((commit) =>
-    commit.commit.message +
-    (commit.commit.note ? "\n\n--- Git Notes ---\n\n" + commit.commit.note : "")
-  );
+  const commitMessages = comparison.commits
+    .reverse()
+    .map(
+      (commit) =>
+        commit.commit.message +
+        (commit.commit.note
+          ? "\n\n--- Git Notes ---\n\n" + commit.commit.note
+          : "")
+    );
   const { commits, issues } = await getCommitsAndIssueData(commitMessages);
 
   const issueStatuses: { [key: string]: string } = {};
@@ -54,14 +63,20 @@ export async function getPage(
     issuesByResolution[resolution].push(issue.key);
   }
 
-  const title = `Comparison between ${base} and ${head}`;
+  const comparisonDescription = `Comparison between ${base} and ${head}.`;
+const title="Scripture Forge Release Procedure";
 
   return page(
     title,
     <Fragment>
       <h1>{title}</h1>
-      <h2>Shipability checks</h2>
-      {await getAllChecks(comparison, base, head)}
+      <p>{comparisonDescription}</p>
+      <h2>Determining releasability</h2>
+      {await getDeterminationChecks(comparison, base, head)}
+      <h2>Ship</h2>
+      {await getShipActions()}
+      <h2>Post-processing</h2>
+      {await getPostProcessingSteps()}
       <h2>Issues ({issueKeys.length})</h2>
       <p>
         <a href={searchLinkForIssueKeys(issueKeys)} target="_blank">
@@ -90,6 +105,6 @@ export async function getPage(
       </p>
       <h2>Commits ({commits.length})</h2>
       {commits.map((c) => c.element)}
-    </Fragment>,
+    </Fragment>
   );
 }
