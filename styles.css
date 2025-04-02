@@ -46,3 +46,12 @@ img {
 .check-details {
   margin-left: 2rem;
 }
+
+.more-information {
+  font-size: small;
+  margin-left: 2em;;
+}
+
+.ui {
+  font-weight: bold;
+}
