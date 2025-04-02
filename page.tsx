@@ -65,6 +65,7 @@ export async function getPage(
 
   const comparisonDescription = `Comparison between ${base} and ${head}.`;
 const title="Scripture Forge Release Procedure";
+const jiraIssuesInRangeUrl=searchLinkForIssueKeys(issueKeys);
 
   return page(
     title,
@@ -76,12 +77,12 @@ const title="Scripture Forge Release Procedure";
       <h2>Ship</h2>
       {await getShipActions()}
       <h2>Post-processing</h2>
-      {await getPostProcessingSteps()}
+      {await getPostProcessingSteps(jiraIssuesInRangeUrl)}
       <h2>Issues ({issueKeys.length})</h2>
       <p>
-        <a href={searchLinkForIssueKeys(issueKeys)} target="_blank">
-          Open issues in Jira
-        </a>
+        View <a href={jiraIssuesInRangeUrl} target="_blank">
+          issues
+        </a> in Jira.
         <ul>
           {issueKeys.map((issueKey) => (
             <li>

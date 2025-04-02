@@ -163,45 +163,6 @@ const shipActions: JSX.Element[] = [
   ),
 ];
 
-const postProcessingSteps: JSX.Element[] = [
-  unknownCheck(
-    <>
-      Re-enable the{" "}
-      <a href={releaseToQAWorkflowUrl} target="_blank">
-        Release to QA GitHub workflow
-      </a>{" "}
-      if it had been disabled.
-    </>
-  ),
-  unknownCheck(
-    <>
-      Perform JIRA release.{" "}
-      <div class="more-information">
-        <p>
-          Click <span class="ui">Open issues in Jira</span> below. Click{" "}
-          <span class="ui">Tools</span> and do a Bulk Change to the issues,
-          where you will add to the <span class="ui">Fix Version/s</span> field
-          the new version number (eg 5.0.2), which will also create a Jira
-          Release for that version number at the same time.
-        </p>{" "}
-        <p>
-          Start another Bulk Change, omit any issues without Status of Closed,
-          and from <span class="ui">Fix Version/s</span> remove "next".
-        </p>
-      </div>
-    </>
-  ),
-  unknownCheck(
-    <>
-      Mark JIRA{" "}
-      <a href={jiraReleasesUrl} target="_blank">
-        Release
-      </a>{" "}
-      as released.
-    </>
-  ),
-];
-
 export async function getDeterminationChecks(
   comparison: Comparison,
   base: string,
@@ -290,7 +251,52 @@ export async function getShipActions(): Promise<JSX.Element> {
   );
 }
 
-export async function getPostProcessingSteps(): Promise<JSX.Element> {
+export async function getPostProcessingSteps(
+  jiraIssuesInRangeUrl: string
+): Promise<JSX.Element> {
+  const postProcessingSteps: JSX.Element[] = [
+    unknownCheck(
+      <>
+        Re-enable the{" "}
+        <a href={releaseToQAWorkflowUrl} target="_blank">
+          Release to QA GitHub workflow
+        </a>{" "}
+        if it had been disabled.
+      </>
+    ),
+    unknownCheck(
+      <>
+        Perform JIRA release.{" "}
+        <div class="more-information">
+          <p>
+            Open the{" "}
+            <a href={jiraIssuesInRangeUrl} target="_blank">
+              list of issues
+            </a>{" "}
+            in JIRA. Click <span class="ui">Tools</span> and do a Bulk Change to
+            the issues, where you will add to the{" "}
+            <span class="ui">Fix Version/s</span> field the new version number
+            (eg 5.0.2), which will also create a Jira Release for that version
+            number at the same time.
+          </p>{" "}
+          <p>
+            Start another Bulk Change, omit any issues without Status of Closed,
+            and from <span class="ui">Fix Version/s</span> remove "next".
+          </p>
+        </div>
+      </>
+    ),
+    unknownCheck(
+      <>
+        Mark JIRA{" "}
+        <a href={jiraReleasesUrl} target="_blank">
+          Release
+        </a>{" "}
+        as released.
+      </>
+    ),
+  ];
+
   return (
     <ul>
       {postProcessingSteps.map((check) => (
