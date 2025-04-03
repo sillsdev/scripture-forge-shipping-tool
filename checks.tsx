@@ -134,39 +134,14 @@ const releaseToQAWorkflowUrl =
 const sfUrl = "https://scriptureforge.org/";
 const jiraReleasesUrl =
   "https://jira.sil.org/projects/SF?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page";
-
-const shipActions: JSX.Element[] = [
-  unknownCheck(
-    <>
-      In conjunction with performing any needed migrations, release by running
-      the{" "}
-      <a href={releaseToLiveWorkflowUrl} target="_blank">
-        workflow
-      </a>
-      .{" "}
-      <p class="more-information">
-        In <span class="ui">level of release</span>, choose{" "}
-        <span class="ui">patch</span> for a release with only bug fixes,{" "}
-        <span class="ui">minor</span> for a release with new features, or{" "}
-        <span class="ui">major</span> when the house needs a new color of paint.
-      </p>
-    </>
-  ),
-  unknownCheck(
-    <>
-      Smoke-test the{" "}
-      <a href={sfUrl} target="_blank">
-        release
-      </a>
-      .
-    </>
-  ),
-];
+const sfLiveBranchProtectionSettingsUrl =
+  "https://github.com/sillsdev/web-xforge/settings/branch_protection_rules/5551052";
 
 export async function getDeterminationChecks(
   comparison: Comparison,
   base: string,
-  head: string
+  head: string,
+  jiraIssuesInRangeUrl: string
 ): Promise<JSX.Element> {
   const determinationChecks: JSX.Element[] = [
     unknownCheck(
@@ -175,6 +150,7 @@ export async function getDeterminationChecks(
         <a href={regressionTestReportUrl} target="_blank">
           report
         </a>
+        .
       </>
     ),
     unknownCheck(
@@ -204,7 +180,10 @@ export async function getDeterminationChecks(
     ),
     unknownCheck(
       <>
-        Issues in release have testing completed.{" "}
+        <a href={jiraIssuesInRangeUrl} target="_blank">
+          Issues
+        </a>{" "}
+        in release have testing completed.{" "}
         <p class="more-information">
           They will have status Resolved, Helps, or Closed if their testing is
           completed.
@@ -227,7 +206,7 @@ export async function getDeterminationChecks(
         <a href={auth0StringsUrl} target="_blank">
           localization files
         </a>{" "}
-        completed
+        completed.
       </>
     ),
   ];
@@ -242,6 +221,87 @@ export async function getDeterminationChecks(
 }
 
 export async function getShipActions(): Promise<JSX.Element> {
+  const shipActions: JSX.Element[] = [
+    unknownCheck(
+      <>
+        Allow workflow to push past branch protection.
+        <p class="more-information">
+          Until we improve how our release workflow interacts with branch
+          protection, workaround branch protection by doing the following while
+          the workflow is running.
+        </p>
+        <p>
+          <ul>
+            <li class="more-information">
+              Open two tabs to sf-live branch protection{" "}
+              <a href={sfLiveBranchProtectionSettingsUrl} target="_blank">
+                settings
+              </a>
+              . (<span class="ui">Settings</span> -{" "}
+              <span class="ui">Branches</span> - sf-live)
+            </li>
+            <li class="more-information">
+              In one tab, Clear{" "}
+              <span class="ui">Restrict who can push to matching branches</span>
+              , and click <span class="ui">Save changes</span>.
+            </li>
+            <li class="more-information">
+              Later, after the workflow deploys, go to the other tab with the
+              previous branch protection settings (which has not only{" "}
+              <span class="ui">Restrict who can push to matching branches</span>{" "}
+              selected, but also specifies items in an allow list), and click{" "}
+              <span class="ui">Save changes</span> to restore the branch
+              protection settings to what they were.
+            </li>
+          </ul>
+        </p>
+      </>
+    ),
+    unknownCheck(
+      <>
+        In conjunction with performing any needed migrations, release by running
+        the{" "}
+        <a href={releaseToLiveWorkflowUrl} target="_blank">
+          workflow
+        </a>
+        .{" "}
+        <p class="more-information">
+          In <span class="ui">level of release</span>, choose{" "}
+          <span class="ui">patch</span> for a release with only bug fixes,{" "}
+          <span class="ui">minor</span> for a release with new features, or{" "}
+          <span class="ui">major</span> when the house needs a new color of
+          paint.
+        </p>
+        <p class="more-information">
+          If you want to release from a specific QA version, rather than the
+          latest commit on branch sf-qa, enter a number in box{" "}
+          <span class="ui">QA version from which to release</span>.
+        </p>
+      </>
+    ),
+    unknownCheck(
+      <>
+        Approve production deployment.
+        <p class="more-information">
+          Click the Release to Live run that was started. When it appears, click{" "}
+          <span class="ui">Review deployments</span>. Select{" "}
+          <span class="ui">production</span>. Click{" "}
+          <span class="ui">Approve and deploy</span>.
+        </p>
+      </>
+    ),
+    unknownCheck("Re-enable branch protection."),
+    unknownCheck(
+      <>
+        Smoke-test the{" "}
+        <a href={sfUrl} target="_blank">
+          release
+        </a>
+        .
+      </>
+    ),
+  ];
+
   return (
     <ul>
       {shipActions.map((check) => (
@@ -266,7 +326,7 @@ export async function getPostProcessingSteps(
     ),
     unknownCheck(
       <>
-        Perform JIRA release.{" "}
+        Put JIRA issues into a release.{" "}
         <div class="more-information">
           <p>
             Open the{" "}
@@ -282,6 +342,14 @@ export async function getPostProcessingSteps(
           <p>
             Start another Bulk Change, omit any issues without Status of Closed,
             and from <span class="ui">Fix Version/s</span> remove "next".
+          </p>
+          <p>
+            Note that release version number can be learned from the GitHub
+            Release to Live workflow run by clicking job{" "}
+            <span class="ui">Deploy to Live</span> -{" "}
+            <span class="ui">Deploy</span>, expanding{" "}
+            <span class="ui">Tag release</span>, and observing the same of the
+            new tag.
           </p>
         </div>
       </>
