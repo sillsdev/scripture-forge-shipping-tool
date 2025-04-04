@@ -1,6 +1,13 @@
 // @deno-types="npm:@octokit/types@9.2.3"
 import { Octokit } from "npm:@octokit/core@4.2.1";
 import { repoInfo } from "./globals.ts";
+import { Octokit as OctokitRest } from "npm:@octokit/rest@21.1.1";
+import type { RestEndpointMethodTypes } from "npm:@octokit/rest@21.1.1";
+
+export interface GitHubPullRequest {
+  number: number;
+  link: string;
+}
 
 const githubToken = Deno.env.get("GITHUB_AUTH_TOKEN");
 
@@ -95,6 +102,89 @@ export async function getAllNotes(): Promise<Map<string, string>> {
   return notes;
 }
 
-export function getLinkForPullRequest(pullRequest: string): string {
-  return `https://github.com/${repoInfo.owner}/${repoInfo.repo}/pull/${pullRequest}`;
+export function getLinkForPullRequest(
+  pullRequestNumber: string,
+  owner: string = repoInfo.owner,
+  repo: string = repoInfo.repo
+): string {
+  return `https://github.com/${owner}/${repo}/pull/${pullRequestNumber}`;
 }
+
+/** Inspects information regarding a particular repository. */
+class GitHubInspector {
+  patHelp: string;
+
+  constructor(
+    private octokit: OctokitRest,
+    private repoOwner: string,
+    private repoName: string
+  ) {
+    this.patHelp = `Does your GitHub fine-grained personal access token have read-only permission to ${this.repoOwner}/${this.repoName} for Contents and Pull Requests?`;
+  }
+
+  async recentOpenPullRequests(): Promise<GitHubPullRequest[]> {
+    try {
+      const openPRs = await this.openPullRequests();
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      const recentPRs = openPRs.filter(
+        (pr: RestEndpointMethodTypes["pulls"]["list"]["response"]["data"]) => {
+          const createdAt = new Date(pr.created_at);
+          return createdAt >= oneMonthAgo;
+        }
+      );
+
+      return recentPRs.map(
+        (pr: RestEndpointMethodTypes["pulls"]["list"]["response"]["data"]) => ({
+          number: pr.number,
+          link: getLinkForPullRequest(pr.number.toString()),
+        })
+      );
+    } catch (error) {
+      console.error(`Error querying PRs. ${this.patHelp}`, error);
+      throw error;
+    }
+  }
+
+  async recentFileChanges(filePath: string): Promise<boolean> {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const since = oneMonthAgo.toISOString();
+
+    try {
+      const response: RestEndpointMethodTypes["repos"]["listCommits"]["response"] =
+        await this.octokit.rest.repos.listCommits({
+          owner: this.repoOwner,
+          repo: this.repoName,
+          path: filePath,
+          since: since,
+        });
+
+      return response.data.length > 0;
+    } catch (error) {
+      console.error(
+        `Error checking commit history for ${filePath}. ${this.patHelp}`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  private async openPullRequests(): Promise<
+    RestEndpointMethodTypes["pulls"]["list"]["response"]["data"]
+  > {
+    const response = await this.octokit.rest.pulls.list({
+      owner: this.repoOwner,
+      repo: this.repoName,
+      state: "open",
+    });
+    return response.data;
+  }
+}
+
+export const auth0GitHubInspector: GitHubInspector = new GitHubInspector(
+  new OctokitRest({ auth: githubToken }),
+  repoInfo.owner,
+  "auth0-configs"
+);

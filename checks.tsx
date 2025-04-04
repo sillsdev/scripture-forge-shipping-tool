@@ -1,8 +1,14 @@
 /** @jsx h */
 /** @jsxFrag Fragment */
 import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
-import { Commit, Comparison, getCommit, getComparison } from "./github.ts";
-import { success, warning } from "./icons.tsx";
+import {
+  auth0GitHubInspector,
+  Comparison,
+  getCommit,
+  getComparison,
+  GitHubPullRequest,
+} from "./github.ts";
+import { warning } from "./icons.tsx";
 import { getLinkForJiraIssue, JiraIssueInfo } from "./jira.ts";
 
 /** Description of the result of investigating a situation.  */
@@ -177,6 +183,80 @@ function considerJiraIssues(jiraIssues: JiraIssueInfo[]): SituationQuery {
   }
 }
 
+async function considerAuth0ConfigurationRepo(): Promise<SituationQuery> {
+  try {
+    const recentPRs: GitHubPullRequest[] =
+      await auth0GitHubInspector.recentOpenPullRequests();
+    const hasRecentENFileChanges: boolean =
+      await auth0GitHubInspector.recentFileChanges("i18n/en.json");
+    const actionNeeded = recentPRs.length > 0 || hasRecentENFileChanges;
+    const description: JSX.Element = (
+      <>
+        <p class="more-information">
+          {recentPRs.length > 0 ? (
+            <>
+              {warning} There are {recentPRs.length} recent open{" "}
+              <a href={auth0PRsUrl} target="_blank">
+                pull request(s)
+              </a>{" "}
+              in the Auth0 configuration repository.
+            </>
+          ) : (
+            <>
+              There were no recent open{" "}
+              <a href={auth0PRsUrl} target="_blank">
+                pull requests
+              </a>{" "}
+              in the Auth0 configuration repository.
+            </>
+          )}
+        </p>{" "}
+        <p class="more-information">
+          {hasRecentENFileChanges ? (
+            <>
+              {warning} There were recent changes to{" "}
+              <a href={auth0StringsUrl} target="_blank">
+                en.json
+              </a>
+              . They may need to be round-tripped through Crowdin and uploaded.
+            </>
+          ) : (
+            <>
+              There were no recent changes to{" "}
+              <a href={auth0StringsUrl} target="_blank">
+                en.json
+              </a>
+              .
+            </>
+          )}{" "}
+        </p>
+      </>
+    );
+
+    return { actionNeeded, description };
+  } catch {
+    return {
+      actionNeeded: true,
+      description: (
+        <>
+          <p class="more-information">
+            {warning} There was a problem querying the Auth0 configuration
+            repository for recent{" "}
+            <a href={auth0PRsUrl} target="_blank">
+              pull requests
+            </a>{" "}
+            or changes to{" "}
+            <a href={auth0StringsUrl} target="_blank">
+              en.json
+            </a>
+            . {auth0GitHubInspector.patHelp}
+          </p>
+        </>
+      ),
+    };
+  }
+}
+
 function unknownCheck(
   description: JSX.Element,
   isChecked: boolean = false
@@ -222,6 +302,8 @@ export async function getDeterminationChecks(
     head
   );
   const issues: SituationQuery = await considerJiraIssues(jiraIssues);
+  const auth0: SituationQuery = await considerAuth0ConfigurationRepo();
+
   const determinationChecks: JSX.Element[] = [
     unknownCheck(
       <>
@@ -242,16 +324,10 @@ export async function getDeterminationChecks(
     ),
     unknownCheck(
       <>
-        Any needed updates to Auth0{" "}
-        <a href={auth0PRsUrl} target="_blank">
-          tenants
-        </a>{" "}
-        or{" "}
-        <a href={auth0StringsUrl} target="_blank">
-          localization files
-        </a>{" "}
-        completed.
-      </>
+        Handle updates to Auth0 tenants or localization files if needed.
+        <p class="more-information">{auth0.description}</p>
+      </>,
+      !auth0.actionNeeded
     ),
     unknownCheck(
       <>
