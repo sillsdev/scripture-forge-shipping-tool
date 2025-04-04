@@ -4,7 +4,15 @@ import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
 import { Commit, Comparison, getCommit, getComparison } from "./github.ts";
 import { success, warning } from "./icons.tsx";
 
-async function migrationInfo(comparison: Comparison): Promise<JSX.Element> {
+/** Description of the result of investigating a situation.  */
+interface SituationQuery {
+  /** Whether an action might be needed, or might not be needed. */
+  actionNeeded: boolean;
+  description: JSX.Element;
+}
+
+/** Indicates if a migration might be needed, and provides a description of the situation. */
+async function migrationInfo(comparison: Comparison): Promise<SituationQuery> {
   // TODO it's not really necessary to fetch all commits in order to get file names
   // if none of the file names in the comparison match the regex
   const commits = await Promise.all(
@@ -19,12 +27,15 @@ async function migrationInfo(comparison: Comparison): Promise<JSX.Element> {
   );
 
   if (possibleMigrationCommits.length === 0) {
-    return (
-      <>
-        {success} None detected (no commit message or file matched{" "}
-        <code>/migrate|migration/i</code>)
-      </>
-    );
+    return {
+      actionNeeded: false,
+      description: (
+        <>
+          No migrations detected. (No commit message or file matched{" "}
+          <code>/migrate|migration/i</code>.)
+        </>
+      ),
+    };
   } else {
     const commitMessagesToShow = possibleMigrationCommits.map(
       (commit) =>
@@ -35,15 +46,18 @@ async function migrationInfo(comparison: Comparison): Promise<JSX.Element> {
           .filter((file) => migrationRegex.test(file))
           .join("\n")
     );
-    return (
-      <>
-        {warning} {possibleMigrationCommits.length} possible migration(s)
-        detected
-        {commitMessagesToShow.map((commit) => (
-          <pre class="check-details">{commit}</pre>
-        ))}
-      </>
-    );
+    return {
+      actionNeeded: true,
+      description: (
+        <>
+          {warning} {possibleMigrationCommits.length} possible migration(s)
+          detected
+          {commitMessagesToShow.map((commit) => (
+            <pre class="check-details">{commit}</pre>
+          ))}
+        </>
+      ),
+    };
   }
 }
 
@@ -68,14 +82,17 @@ async function fastForwardInfo(
   comparison: Comparison,
   base: string,
   head: string
-): Promise<JSX.Element> {
+): Promise<SituationQuery> {
   if (comparison.status === "ahead") {
-    return (
-      <>
-        {success} Is fast-forward: Yes (ahead by{"  "}
-        {comparison.ahead_by})
-      </>
-    );
+    return {
+      actionNeeded: false,
+      description: (
+        <>
+          Is fast-forward: Yes (ahead by{"  "}
+          {comparison.ahead_by})
+        </>
+      ),
+    };
   } else {
     const reverseComparison = await getComparison(head, base);
     const nonCherryPickCommits = nonCherryPickedCommits(
@@ -83,37 +100,47 @@ async function fastForwardInfo(
       reverseComparison
     );
     if (nonCherryPickCommits.length === 0) {
-      return (
-        <>
-          {success} Is fast-forward: No, {comparison.status} (ahead by{" "}
-          {comparison.ahead_by}, behind by {comparison.behind_by}, but all
-          diverging commits are cherry-picked across branches)
-        </>
-      );
+      return {
+        actionNeeded: false,
+        description: (
+          <>
+            Is fast-forward: No, {comparison.status} (ahead by{" "}
+            {comparison.ahead_by}, behind by {comparison.behind_by}, but all
+            diverging commits are cherry-picked across branches)
+          </>
+        ),
+      };
     } else {
-      return (
-        <>
-          {warning} Is fast-forward: No, {comparison.status} (ahead by{" "}
-          {comparison.ahead_by}, behind by{"  "}
-          {comparison.behind_by}, {nonCherryPickCommits.length} commits that are
-          not cherry-picked across branches)
-          <p>
-            {nonCherryPickCommits.map((commit) => (
-              <a href={commit.html_url} target="_blank">
-                {commit.commit.message}
-              </a>
-            ))}
-          </p>
-        </>
-      );
+      return {
+        actionNeeded: true,
+        description: (
+          <>
+            {warning} Is fast-forward: No, {comparison.status} (ahead by{" "}
+            {comparison.ahead_by}, behind by{"  "}
+            {comparison.behind_by}, {nonCherryPickCommits.length} commits that
+            are not cherry-picked across branches)
+            <p>
+              {nonCherryPickCommits.map((commit) => (
+                <a href={commit.html_url} target="_blank">
+                  {commit.commit.message}
+                </a>
+              ))}
+            </p>
+          </>
+        ),
+      };
     }
   }
 }
 
-function unknownCheck(description: JSX.Element): JSX.Element {
+function unknownCheck(
+  description: JSX.Element,
+  isChecked: boolean = false
+): JSX.Element {
   return (
     <label>
-      <input type="checkbox" /> {description}
+      <input type="checkbox" {...(isChecked ? { checked: true } : {})} />{" "}
+      {description}
     </label>
   );
 }
@@ -143,6 +170,12 @@ export async function getDeterminationChecks(
   head: string,
   jiraIssuesInRangeUrl: string
 ): Promise<JSX.Element> {
+  const migration: SituationQuery = await migrationInfo(comparison);
+  const fastForwardComparison: SituationQuery = await fastForwardInfo(
+    comparison,
+    base,
+    head
+  );
   const determinationChecks: JSX.Element[] = [
     unknownCheck(
       <>
@@ -171,9 +204,10 @@ export async function getDeterminationChecks(
     ),
     unknownCheck(
       <>
-        Prepare to handle any needed migrations.
-        <p>{await migrationInfo(comparison)}</p>
-      </>
+        Be ready to handle any needed migrations.
+        <p class="more-information">{migration.description}</p>
+      </>,
+      !migration.actionNeeded
     ),
     unknownCheck(
       "Consider the commits being released, below. Does anything need attention?"
@@ -192,9 +226,10 @@ export async function getDeterminationChecks(
     ),
     unknownCheck(
       <>
-        If there is a hotfix on Live, the same code should also be on QA.
-        <p>{await fastForwardInfo(comparison, base, head)}</p>
-      </>
+        QA should contain hotfixes on Live, if any.
+        <p class="more-information">{fastForwardComparison.description}</p>
+      </>,
+      !fastForwardComparison.actionNeeded
     ),
     unknownCheck(
       <>
