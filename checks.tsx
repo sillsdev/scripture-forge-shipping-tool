@@ -225,6 +225,36 @@ export async function getDeterminationChecks(
   const determinationChecks: JSX.Element[] = [
     unknownCheck(
       <>
+        QA should contain hotfixes on Live, if any.
+        <p class="more-information">{fastForwardComparison.description}</p>
+      </>,
+      !fastForwardComparison.actionNeeded
+    ),
+    unknownCheck(
+      <>
+        <a href={jiraIssuesInRangeUrl} target="_blank">
+          Issues
+        </a>{" "}
+        in release have testing completed.{" "}
+        <p class="more-information">{issues.description}</p>
+      </>,
+      !issues.actionNeeded
+    ),
+    unknownCheck(
+      <>
+        Any needed updates to Auth0{" "}
+        <a href={auth0PRsUrl} target="_blank">
+          tenants
+        </a>{" "}
+        or{" "}
+        <a href={auth0StringsUrl} target="_blank">
+          localization files
+        </a>{" "}
+        completed.
+      </>
+    ),
+    unknownCheck(
+      <>
         No blockers in full regression test{" "}
         <a href={regressionTestReportUrl} target="_blank">
           report
@@ -249,44 +279,14 @@ export async function getDeterminationChecks(
       </>
     ),
     unknownCheck(
+      "Consider the commits being released, below. Does anything need attention?"
+    ),
+    unknownCheck(
       <>
         Be ready to handle any needed migrations.
         <p class="more-information">{migration.description}</p>
       </>,
       !migration.actionNeeded
-    ),
-    unknownCheck(
-      "Consider the commits being released, below. Does anything need attention?"
-    ),
-    unknownCheck(
-      <>
-        <a href={jiraIssuesInRangeUrl} target="_blank">
-          Issues
-        </a>{" "}
-        in release have testing completed.{" "}
-        <p class="more-information">{issues.description}</p>
-      </>,
-      !issues.actionNeeded
-    ),
-    unknownCheck(
-      <>
-        QA should contain hotfixes on Live, if any.
-        <p class="more-information">{fastForwardComparison.description}</p>
-      </>,
-      !fastForwardComparison.actionNeeded
-    ),
-    unknownCheck(
-      <>
-        Any needed updates to Auth0{" "}
-        <a href={auth0PRsUrl} target="_blank">
-          tenants
-        </a>{" "}
-        or{" "}
-        <a href={auth0StringsUrl} target="_blank">
-          localization files
-        </a>{" "}
-        completed.
-      </>
     ),
   ];
 
