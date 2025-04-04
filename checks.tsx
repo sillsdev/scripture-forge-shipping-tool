@@ -3,6 +3,7 @@
 import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
 import { Commit, Comparison, getCommit, getComparison } from "./github.ts";
 import { success, warning } from "./icons.tsx";
+import { getLinkForJiraIssue, JiraIssueInfo } from "./jira.ts";
 
 /** Description of the result of investigating a situation.  */
 interface SituationQuery {
@@ -133,6 +134,49 @@ async function fastForwardInfo(
   }
 }
 
+/** Return whether or not all given issues have their testing complete. */
+function considerJiraIssues(jiraIssues: JiraIssueInfo[]): SituationQuery {
+  const completedStatuses = ["Resolved", "Helps", "Closed"];
+  const incompleteIssues = jiraIssues.filter(
+    (issue) => !completedStatuses.includes(issue.status)
+  );
+
+  if (incompleteIssues.length === 0) {
+    return {
+      actionNeeded: false,
+      description: (
+        <>
+          All issues have completed testing (status is Resolved, Helps, or
+          Closed).
+        </>
+      ),
+    };
+  } else {
+    return {
+      actionNeeded: true,
+      description: (
+        <>
+          {warning} {incompleteIssues.length} issue(s) do not have completed
+          testing status.
+          <p class="more-information">
+            Issues with status other than Resolved, Helps, or Closed:
+            <ul class="more-information">
+              {incompleteIssues.map((issue) => (
+                <li>
+                  <a href={getLinkForJiraIssue(issue.key)} target="_blank">
+                    {issue.key}
+                  </a>
+                  : {issue.summary}
+                </li>
+              ))}
+            </ul>
+          </p>
+        </>
+      ),
+    };
+  }
+}
+
 function unknownCheck(
   description: JSX.Element,
   isChecked: boolean = false
@@ -168,7 +212,8 @@ export async function getDeterminationChecks(
   comparison: Comparison,
   base: string,
   head: string,
-  jiraIssuesInRangeUrl: string
+  jiraIssuesInRangeUrl: string,
+  jiraIssues: JiraIssueInfo[]
 ): Promise<JSX.Element> {
   const migration: SituationQuery = await migrationInfo(comparison);
   const fastForwardComparison: SituationQuery = await fastForwardInfo(
@@ -176,6 +221,7 @@ export async function getDeterminationChecks(
     base,
     head
   );
+  const issues: SituationQuery = await considerJiraIssues(jiraIssues);
   const determinationChecks: JSX.Element[] = [
     unknownCheck(
       <>
@@ -218,11 +264,9 @@ export async function getDeterminationChecks(
           Issues
         </a>{" "}
         in release have testing completed.{" "}
-        <p class="more-information">
-          They will have status Resolved, Helps, or Closed if their testing is
-          completed.
-        </p>
-      </>
+        <p class="more-information">{issues.description}</p>
+      </>,
+      !issues.actionNeeded
     ),
     unknownCheck(
       <>

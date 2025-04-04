@@ -16,6 +16,7 @@ export type JiraIssueInfo = {
   summary: string;
   iconUrl: string;
   resolution: string;
+  status: string;
 };
 
 export async function getJiraIssueInfos(
@@ -27,7 +28,7 @@ export async function getJiraIssueInfos(
   }
   const searchUrl = `${apiRoot}/search?jql=${encodedJiraIssueSearch(
     keys
-  )}&fields=summary,issuetype,resolution`;
+  )}&fields=summary,issuetype,resolution,status`;
   const response = await fetch(searchUrl, {
     headers: { Authorization: `Bearer ${jiraPersonalAccessToken}` },
   });
@@ -37,6 +38,7 @@ export async function getJiraIssueInfos(
     summary: issue.fields.summary,
     iconUrl: issue.fields.issuetype.iconUrl,
     resolution: issue.fields.resolution?.name ?? "Unresolved",
+    status: issue.fields.status.name,
   }));
 }
 

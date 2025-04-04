@@ -3,7 +3,7 @@
 import { Fragment, h } from "https://deno.land/x/jsx@v0.1.5/mod.ts";
 import { getLinkForJiraIssue, searchLinkForIssueKeys } from "./jira.ts";
 import { getComparison } from "./github.ts";
-import { getCommitsAndIssueData } from "./commit.tsx";
+import { CommitsAndIssues, getCommitsAndIssueData } from "./commit.tsx";
 import {
   getDeterminationChecks,
   getPostProcessingSteps,
@@ -45,7 +45,9 @@ export async function getPage(
           ? "\n\n--- Git Notes ---\n\n" + commit.commit.note
           : "")
     );
-  const { commits, issues } = await getCommitsAndIssueData(commitMessages);
+  const { commits, issues }: CommitsAndIssues = await getCommitsAndIssueData(
+    commitMessages
+  );
 
   const issueStatuses: { [key: string]: string } = {};
   for (const issue of issues) {
@@ -77,7 +79,8 @@ export async function getPage(
         comparison,
         base,
         head,
-        jiraIssuesInRangeUrl
+        jiraIssuesInRangeUrl,
+        issues
       )}
       <h2>Ship</h2>
       {await getShipActions()}
