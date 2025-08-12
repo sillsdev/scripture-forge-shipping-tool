@@ -518,6 +518,31 @@ export async function getPostProcessingSteps(
         as released.
       </>
     ),
+    unknownCheck(
+      <>
+        Post release notes.{" "}
+        <div class="more-information">
+          <p>
+            Click <span class="ui">Edit</span> on the draft in the{" "}
+            <a
+              href="https://software.sil.org/scriptureforge/wp-admin/edit.php?post_status=draft&post_type=post"
+              target="_blank"
+            >
+              list
+            </a>{" "}
+            and click <span class="ui">Publish</span>. This will make it show on
+            the{" "}
+            <a
+              href="https://software.sil.org/scriptureforge/news/"
+              target="_blank"
+            >
+              News
+            </a>{" "}
+            page.
+          </p>
+        </div>
+      </>
+    ),
   ];
 
   return (
