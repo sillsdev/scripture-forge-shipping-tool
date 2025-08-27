@@ -481,14 +481,14 @@ export async function getPostProcessingSteps(
     ),
     unknownCheck(
       <>
-        Put JIRA issues into a release.{" "}
+        Put Jira issues into a release.{" "}
         <div class="more-information">
           <p>
             Open the{" "}
             <a href={jiraIssuesInRangeUrl} target="_blank">
               list of issues
             </a>{" "}
-            in JIRA. Click <span class="ui">Tools</span> and do a Bulk Change to
+            in Jira. Click <span class="ui">Tools</span> and do a Bulk Change to
             the issues, where you will add to the{" "}
             <span class="ui">Fix Version/s</span> field the new version number
             (eg 5.0.2), which will also create a Jira Release for that version
@@ -511,11 +511,11 @@ export async function getPostProcessingSteps(
     ),
     unknownCheck(
       <>
-        Mark JIRA{" "}
+        Mark Jira{" "}
         <a href={jiraReleasesUrl} target="_blank">
           Release
         </a>{" "}
-        as released.
+        as released and remove the "next" version from the issues.
       </>
     ),
     unknownCheck(

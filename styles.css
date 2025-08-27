@@ -50,3 +50,9 @@ img {
 .ui {
   font-weight: bold;
 }
+
+.commit-message {
+  border-left: 1px solid grey;
+  padding-left: 1em;
+  margin-block: 2em;
+}

@@ -87,13 +87,13 @@ function getCommitData(
   }
 
   const element: JSX.Element = (
-    <>
+    <div class="commit-message">
       {issueInfo ? <img src={issueInfo.iconUrl} alt={issueInfo.key} /> : ""}
       <span>
         {issueInfo ? `${issueInfo.summary} (${issueInfo.resolution})` : ""}
       </span>
       <pre>{result}</pre>
-    </>
+    </div>
   );
 
   return {
