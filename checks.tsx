@@ -445,7 +445,7 @@ export async function getShipActions(): Promise<JSX.Element> {
         </p>
       </>
     ),
-    unknownCheck("Re-enable branch protection."),
+    unknownCheck("After the workflow completes, re-enable branch protection."),
     unknownCheck(
       <>
         Smoke-test the{" "}
@@ -503,7 +503,7 @@ export async function getPostProcessingSteps(
             Release to Live workflow run by clicking job{" "}
             <span class="ui">Deploy to Live</span> -{" "}
             <span class="ui">Deploy</span>, expanding{" "}
-            <span class="ui">Tag release</span>, and observing the same of the
+            <span class="ui">Tag release</span>, and observing the name of the
             new tag.
           </p>
         </div>
