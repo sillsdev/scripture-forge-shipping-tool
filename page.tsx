@@ -64,7 +64,6 @@ export async function getPage(
     issuesByResolution[resolution].push(issue.key);
   }
 
-  const comparisonDescription = `Comparison between ${base} and ${head}.`;
   const title = "Scripture Forge Release Procedure";
   const jiraIssuesInRangeUrl = searchLinkForIssueKeys(issueKeys);
 
@@ -72,7 +71,10 @@ export async function getPage(
     title,
     <Fragment>
       <h1>{title}</h1>
-      <p>{comparisonDescription}</p>
+      <p>
+        Comparison between <span class="boundary-commit">{base}</span> and{" "}
+        <span class="boundary-commit">{head}</span>.
+      </p>
       <p>
         You can change comparison to compare from a Beginning commit to and
         Ending commit. For example, you might select a Beginning commit that is
