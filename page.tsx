@@ -17,7 +17,7 @@ function getCss(): Promise<string> {
 
 export async function page(
   title: string,
-  content: JSX.Element
+  content: JSX.Element,
 ): Promise<JSX.Element> {
   return (
     <html>
@@ -32,7 +32,7 @@ export async function page(
 
 export async function getPage(
   base: string,
-  head: string
+  head: string,
 ): Promise<JSX.Element> {
   const comparison = await getComparison(base, head);
 
@@ -43,11 +43,10 @@ export async function getPage(
         commit.commit.message +
         (commit.commit.note
           ? "\n\n--- Git Notes ---\n\n" + commit.commit.note
-          : "")
+          : ""),
     );
-  const { commits, issues }: CommitsAndIssues = await getCommitsAndIssueData(
-    commitMessages
-  );
+  const { commits, issues }: CommitsAndIssues =
+    await getCommitsAndIssueData(commitMessages);
 
   const issueStatuses: { [key: string]: string } = {};
   for (const issue of issues) {
@@ -74,13 +73,47 @@ export async function getPage(
     <Fragment>
       <h1>{title}</h1>
       <p>{comparisonDescription}</p>
+      <p>
+        You can change comparison to compare from a Beginning commit to and
+        Ending commit. For example, you might select a Beginning commit that is
+        the last commit that was published, and an Ending commit that what you
+        are considering publishing.
+      </p>
+      <p>
+        <form onsubmit="window.location.assign('/compare/' + encodeURIComponent(this.base.value) + '/' + encodeURIComponent(this.head.value)); return false;">
+          <label for="base">Beginning</label>
+          <input
+            id="base"
+            name="base"
+            value={base}
+            required
+            pattern="[-\\w.]+"
+          />
+          &nbsp;🡲&nbsp;
+          <label for="head">Ending</label>
+          <input
+            id="head"
+            name="head"
+            value={head}
+            required
+            pattern="[-\\w.]+"
+          />
+          <button type="submit">Compare</button>
+          <button
+            type="button"
+            onclick="this.form.base.value='sf-live'; this.form.head.value='sf-qa';"
+          >
+            Default
+          </button>
+        </form>
+      </p>
       <h2>Determining releasability</h2>
       {await getDeterminationChecks(
         comparison,
         base,
         head,
         jiraIssuesInRangeUrl,
-        issues
+        issues,
       )}
       <h2>Ship</h2>
       {await getShipActions()}
@@ -116,6 +149,6 @@ export async function getPage(
       </p>
       <h2>Commits ({commits.length})</h2>
       {commits.map((c) => c.element)}
-    </Fragment>
+    </Fragment>,
   );
 }
