@@ -23,6 +23,7 @@ export async function page(
     <html>
       <head>
         <title>{title}</title>
+        <link rel="icon" href="/images/favicon-steamboat.ico" />
         <style dangerouslySetInnerHTML={{ __html: await getCss() }}></style>
       </head>
       <body>{content}</body>
